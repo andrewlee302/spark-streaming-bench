@@ -5,6 +5,7 @@ You can find the metrics configuration template on the [project web page](https:
 
 
 ## MicroBench
+
 ### WordCount
 * ActorWordCount
 * HDFSWordCount
@@ -22,6 +23,7 @@ You can find the metrics configuration template on the [project web page](https:
 * spark-streaming-kafka_2.10-1.3.0.jar
 * zkclient-0.3.jar
 
-## The script is hard-coding, I will do code refine and add the help info then.
+## Note
+The script is hard-coding, I will do code refine and add the help info then.
 
-## Contact: Andrew Lee ([lichundian@gmail.com](mailto:lichundian@gmail.com))
+Contact: Andrew Lee ([lichundian@gmail.com](mailto:lichundian@gmail.com))
