@@ -121,7 +121,7 @@ object FeederActor {
   def main(args: Array[String]) {
     if(args.length < 4){
       System.err.println(
-        "Usage: FeederActor <hostname> <port> <messageSize(B)> <messageNumPerSecond>\n"
+        "Usage: FeederActor <hostname> <port> <messageSize(B)> <messageNumPerSecond>"
       )
       System.exit(1)
     }
@@ -143,20 +143,21 @@ object FeederActor {
 /**
  *
  * To run this example locally, you may run Feeder Actor as
- *    `$ bin/spark-submit --class org.apache.spark.microbench.FeederActor --master spark://lingcloud21:7077 --executor-memory 256M local:/home/nbtest/develop/spark-1.3.0-bin-hadoop2.4/spark-benchmark.jar <hostname> <port> <messageSize> <messageNumPerSecond>`
+ *    `$ bin/spark-submit --class org.apache.spark.microbench.FeederActor --master spark://lingcloud21:7077 file:/home/nbtest/develop/spark-1.3.0-bin-hadoop2.4/spark-benchmark.jar <hostname> <port> <messageSize> <messageNumPerSecond>`
  * and then run the example
- *    `$ bin/spark-submit --class org.apache.spark.microbench.ActorWordCount --master spark://lingcloud21:7077 --executor-memory 1G local:/home/nbtest/develop/spark-1.3.0-bin-hadoop2.4/spark-benchmark.jar <hostname> <port> <batchInterval>`
+ *    `$ bin/spark-submit --class org.apache.spark.microbench.ActorWordCount --master spark://lingcloud21:7077 file:/home/nbtest/develop/spark-1.3.0-bin-hadoop2.4/spark-benchmark.jar <hostname> <port> <batchInterval> <print(0) or save(1)>`
  */
 object ActorWordCount {
   def main(args: Array[String]) {
     if (args.length < 3) {
       System.err.println(
-        "Usage: ActorWordCount <hostname> <port> <batchInterval(sec)>")
+        "Usage: ActorWordCount <hostname> <port> <batchInterval(sec)> <print(0) or save(1)>")
       System.exit(1)
     }
 
-    val Seq(host, port, batchIntervalStr) = args.toSeq
+    val Seq(host, port, batchIntervalStr, flagStr) = args.toSeq
     val batchInterval = batchIntervalStr.toInt
+    val flag = flagStr.toInt
     val sparkConf = new SparkConf().setAppName("ActorWordCount")
     // Create the context and set the batch size
     val ssc = new StreamingContext(sparkConf, Seconds(batchInterval))
@@ -178,9 +179,13 @@ object ActorWordCount {
       Props(new SampleActorReceiver[String]("akka.tcp://spout@%s:%s/user/FeederActor".format(
         host, port.toInt))), "SampleReceiver")
 
-    // compute wordcount
-    lines.flatMap(_.split("\\s+")).map(x => (x, 1)).reduceByKey(_ + _).print()
-
+    val wordCounts = lines.flatMap(_.split("\\s+")).map(x => (x, 1)).reduceByKey(_ + _)
+    if(0 == flag)
+      wordCounts.print()
+    else if(1 == flag)
+      wordCounts.saveAsTextFiles("/spark-stream/out/result")
+    else
+      return
     ssc.start()
     ssc.awaitTermination()
   }
